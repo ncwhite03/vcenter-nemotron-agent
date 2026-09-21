@@ -1,0 +1,33 @@
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    ports:
+      - "3000:8080"
+    environment:
+      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY:?set WEBUI_SECRET_KEY in .env}
+      # Pre-wire Nemotron via NVIDIA NIM (OpenAI-compatible). Leave blank to add connections in the UI instead.
+      OPENAI_API_BASE_URL: ${OPENAI_API_BASE_URL:-https://integrate.api.nvidia.com/v1}
+      OPENAI_API_KEY: ${NVIDIA_NIM_API_KEY:-}
+      # Fallback vCenter config for the tool when its VCENTERS valve is left as {}
+      VCENTERS_JSON: ${VCENTERS_JSON:-{}}
+    volumes:
+      - open-webui-data:/app/backend/data
+    restart: unless-stopped
+
+  # Optional local Nemotron via Ollama:  docker compose --profile local up -d
+  # then: docker exec -it ollama ollama pull nemotron-mini
+  # and point Open WebUI at http://ollama:11434 (Admin > Settings > Connections).
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    profiles: ["local"]
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    restart: unless-stopped
+
+volumes:
+  open-webui-data:
+  ollama-data:
